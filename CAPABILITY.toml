@@ -1,0 +1,58 @@
+# CAPABILITY.toml — SuperInstance machine-readable manifest
+# nanochat: full-stack LLM training pipeline
+
+[crate]
+name = "nanochat"
+layer = "training"
+version = "0.1.0"
+description = "Full-stack LLM training pipeline: tokenizer → pretrain → SFT → RL → eval → chat UI"
+repository = "https://github.com/SuperInstance/nanochat"
+license = "MIT"
+language = "python"
+runtime = "python>=3.10"
+
+[provides]
+capabilities = [
+    "llm_training",
+    "synthetic_data_generation",
+    "inference_engine",
+    "chat_ui",
+    "evaluation",
+    "tokenizer_training",
+]
+stages = ["tokenize", "pretrain", "sft", "rl", "eval", "chat"]
+entrypoints = { tok_train = "scripts/tok_train.py", base_train = "scripts/base_train.py", chat_sft = "scripts/chat_sft.py", chat_rl = "scripts/chat_rl.py", chat_web = "scripts/chat_web.py", base_eval = "scripts/base_eval.py" }
+
+[requires]
+hardware = "single-GPU (CUDA recommended)"
+dependencies = ["torch", "tiktoken", "datasets", "fastapi", "wandb"]
+
+[integrates.autoclaw]
+description = "Automated training loop: autoclaw discovers training targets, nanochat executes them"
+mode = "pipeline"
+flow = "autoclaw detects capability gap → generates training config → nanochat trains → model deposited"
+config_key = "training.nanochat"
+
+[integrates.openmind]
+description = "Cellular decomposition produces structured code units → synthetic Q&A generation for fine-tuning"
+mode = "data-source"
+flow = "openmind decomposes codebase → cells exported as CAPABILITY.toml → synthetic_from_capability.py → JSONL → nanochat SFT"
+data_format = "CustomJSON"
+
+[integrates.open_vectors]
+description = "Embedding storage and retrieval for training runs, loss landscapes, and evaluation metrics"
+mode = "storage"
+flow = "nanochat training run → loss/metrics embeddings → open_vectors index → spectral analysis feedback"
+what = ["training_checkpoints", "loss_embeddings", "eval_metrics"]
+
+[training]
+default_depth = 26
+compute_optimal = true
+stages_order = ["tokenize", "pretrain", "sft", "rlhf", "evaluate"]
+supported_datasets = ["fineweb", "openhermes", "custom_jsonl"]
+fp8_support = true
+flash_attention = true
+
+[evaluation]
+benchmarks = ["humaneval", "arc", "hellaswag", "mmlu"]
+custom_eval = "tasks/"
